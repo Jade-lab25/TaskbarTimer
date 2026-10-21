@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
+using TaskbarTimer.Models;
 using TaskbarTimer.Services;
 
 namespace TaskbarTimer;
@@ -240,12 +241,10 @@ public static class AppActions
         main.Topmost = false;
     }
 
-    public static void StopSession()
+    /// <summary>静默结束并保存当前会话（不弹「已保存」提示框，避免系统提示音）。</summary>
+    public static TimingRecord? StopSession()
     {
-        var r = SessionService.Instance.StopAndSave();
-        if (r != null)
-            MessageBox.Show($"已保存：{r.Task}\n时长 {TimeSpan.FromSeconds(r.DurationSeconds):hh\\:mm\\:ss}",
-                "计时结束", MessageBoxButton.OK, MessageBoxImage.Information);
+        return SessionService.Instance.StopAndSave();
     }
 
     public static void ExitApp(Window sender)

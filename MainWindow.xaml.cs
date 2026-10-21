@@ -116,7 +116,12 @@ public partial class MainWindow : Window
         WindowState = WindowState.Minimized; // 计时开始后缩到任务栏，让位给工作
     }
 
-    private void OnStop(object sender, RoutedEventArgs e) => AppActions.StopSession();
+    private void OnStop(object sender, RoutedEventArgs e)
+    {
+        var r = AppActions.StopSession();
+        if (r != null)
+            LiveStatus.Text = $"已保存：{r.Task} · {TimeSpan.FromSeconds(r.DurationSeconds):hh\\:mm\\:ss}";
+    }
 
     private void OnTaskInputKeyDown(object sender, KeyEventArgs e)
     {

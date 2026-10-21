@@ -8,6 +8,7 @@ namespace TaskbarTimer;
 public partial class App : Application
 {
     private static Mutex? _mutex;
+    private static bool _ownsMutex;
     private static EventWaitHandle? _activateEvent;
     private static System.Windows.Forms.NotifyIcon? _trayIcon;
 
@@ -20,6 +21,7 @@ public partial class App : Application
     {
         // 单实例保护：已有实例在运行时，唤醒它的主窗口而不是弹提示
         _mutex = new Mutex(true, "TaskbarTimer_SingleInstance_" + Assembly.GetExecutingAssembly().GetName().Name, out bool createdNew);
+        _ownsMutex = createdNew;
         if (!createdNew)
         {
             if (EventWaitHandle.TryOpenExisting(ActivateEventName, out var evt))
@@ -101,7 +103,11 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _trayIcon?.Dispose();
-        _mutex?.ReleaseMutex();
+        // 仅当本实例真正拥有 mutex（首实例）时才释放；第二实例不拥有，释放会抛异常
+        if (_ownsMutex)
+        {
+            try { _mutex?.ReleaseMutex(); } catch (ApplicationException) { }
+        }
         _mutex?.Dispose();
         base.OnExit(e);
     }
