@@ -1,0 +1,14 @@
+# 构建产物
+bin/
+obj/
+publish/
+publish-self-contained/
+
+# Visual Studio / Rider
+.vs/
+*.user
+*.suo
+
+# 系统文件
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,31 @@
+<Window x:Class="TaskbarTimer.TimerWidget"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False"
+        AllowsTransparency="True" Background="Transparent"
+        ShowActivated="False" Topmost="True" SizeToContent="WidthAndHeight" Icon="app.ico"
+        Title="任务栏计时器">
+  <Border x:Name="RootBorder" Background="{StaticResource ColorBgDark}" CornerRadius="4"
+          Padding="10,4" MouseLeftButtonDown="OnMouseLeftButtonDown"
+          MouseMove="OnMouseMove" MouseLeftButtonUp="OnMouseLeftButtonUp"
+          ToolTipOpening="OnToolTipOpening">
+    <StackPanel Orientation="Horizontal" x:Name="ContentPanel">
+      <TextBlock x:Name="TimeText" FontFamily="Consolas" FontSize="15" FontWeight="Bold"
+                 Foreground="{StaticResource ColorTextLight}" VerticalAlignment="Center"/>
+      <TextBlock x:Name="NameText" FontSize="13" Margin="8,0,0,0"
+                 Foreground="{StaticResource ColorTextMuted}" VerticalAlignment="Center"/>
+    </StackPanel>
+    <Border.ToolTip>
+      <ToolTip x:Name="WidgetTip" Content=" "/>
+    </Border.ToolTip>
+    <Border.ContextMenu>
+      <ContextMenu>
+        <MenuItem x:Name="MenuToggle" Header="开始 / 暂停" Click="OnMenuToggle"/>
+        <MenuItem Header="结束并保存本次" Click="OnMenuStop"/>
+        <Separator/>
+        <MenuItem Header="打开主窗口" Click="OnMenuMain"/>
+        <MenuItem Header="退出程序" Click="OnMenuExit"/>
+      </ContextMenu>
+    </Border.ContextMenu>
+  </Border>
+</Window>
