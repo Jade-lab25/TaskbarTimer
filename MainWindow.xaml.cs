@@ -238,6 +238,30 @@ public partial class MainWindow : Window
         LoadRecords();
     }
 
+    // ---------- 任务统计 ----------
+
+    private StatsWindow? _statsWin;
+
+    private void OnStats(object sender, RoutedEventArgs e)
+    {
+        if (_statsWin != null && _statsWin.IsVisible)
+        {
+            _statsWin.Activate();
+            return;
+        }
+        _statsWin = new StatsWindow { Owner = this };
+        _statsWin.Closed += (_, _) => _statsWin = null;
+        _statsWin.Show();
+    }
+
+    /// <summary>供统计窗口双击回填任务名。</summary>
+    public void SetTaskInput(string task)
+    {
+        TaskInput.Text = task;
+        TaskInput.Focus();
+        TaskInput.SelectAll();
+    }
+
     private void OnExport(object sender, RoutedEventArgs e)
     {
         var records = _rows.Select(r => r.Source).ToList();

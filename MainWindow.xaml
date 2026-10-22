@@ -61,7 +61,8 @@
           <ComboBoxItem Content="近7天"/>
           <ComboBoxItem Content="全部"/>
         </ComboBox>
-        <Button Content="导出 CSV" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0" Click="OnExport"/>
+        <Button Content="任务统计" Style="{StaticResource SecondaryButton}" Margin="10,0,0,0" Click="OnStats"/>
+        <Button Content="导出 CSV" Style="{StaticResource SecondaryButton}" Margin="6,0,0,0" Click="OnExport"/>
         <Button Content="再次计时" Style="{StaticResource SecondaryButton}" Margin="6,0,0,0" Click="OnReuseTask"/>
         <Button Content="重置小窗位置" Style="{StaticResource SecondaryButton}" Margin="6,0,0,0" Click="OnResetWidget"/>
         <Button Content="删除选中" Style="{StaticResource SecondaryButton}" Margin="6,0,0,0" Click="OnDelete"/>

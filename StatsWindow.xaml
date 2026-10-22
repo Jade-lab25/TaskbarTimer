@@ -1,0 +1,45 @@
+<Window x:Class="TaskbarTimer.StatsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="任务统计" Height="520" Width="720" Icon="app.ico"
+        WindowStartupLocation="CenterOwner" Background="{StaticResource ColorSurface}">
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- 搜索行 -->
+    <Grid Grid.Row="0" Margin="0,0,0,12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <TextBlock Text="搜索任务：" VerticalAlignment="Center"/>
+      <TextBox x:Name="SearchBox" Grid.Column="1" Margin="8,0,0,0"
+               TextChanged="OnSearchChanged"/>
+    </Grid>
+
+    <!-- 任务汇总表 -->
+    <DataGrid Grid.Row="1" x:Name="StatsGrid" AutoGenerateColumns="False" CanUserAddRows="False"
+              HeadersVisibility="Column" SelectionMode="Single" GridLinesVisibility="Horizontal"
+              HorizontalGridLinesBrush="{StaticResource ColorBorder}" Background="White"
+              IsReadOnly="True" MouseDoubleClick="OnRowDoubleClick">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="任务名" Binding="{Binding Task}" Width="*"/>
+        <DataGridTextColumn Header="专注次数" Binding="{Binding Count}" Width="100"/>
+        <DataGridTextColumn Header="总时长" Binding="{Binding TotalText}" Width="100"/>
+        <DataGridTextColumn Header="平均单次" Binding="{Binding AvgText}" Width="100"/>
+        <DataGridTextColumn Header="最近一次" Binding="{Binding LastDate}" Width="110"/>
+      </DataGrid.Columns>
+    </DataGrid>
+
+    <!-- 底部汇总 -->
+    <StackPanel Grid.Row="2" Margin="0,12,0,0">
+      <TextBlock x:Name="SummaryText" FontWeight="Bold"/>
+      <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ColorTextMuted}"
+                 Text="提示：按任务名汇总专注次数与时长；上方搜索框可输入关键字过滤（模糊匹配）。双击某行任务，可将任务名填回主窗口输入框直接再次计时。"/>
+    </StackPanel>
+  </Grid>
+</Window>
