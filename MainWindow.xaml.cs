@@ -262,6 +262,25 @@ public partial class MainWindow : Window
         TaskInput.SelectAll();
     }
 
+    /// <summary>复制当前筛选范围的全部记录为 TSV（粘贴到 WPS/Excel 自动分列）。</summary>
+    private void OnCopyTable(object sender, RoutedEventArgs e)
+    {
+        if (_rows.Count == 0)
+        {
+            MessageBox.Show("当前范围内没有可复制的记录。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("日期\t开始时间\t结束时间\t时长\t专注事项\t进展记录");
+        foreach (var r in _rows)
+            sb.AppendLine($"{Clean(r.Date)}\t{Clean(r.Start)}\t{Clean(r.End)}\t{Clean(r.DurationText)}\t{Clean(r.Task)}\t{Clean(r.Notes)}");
+        Clipboard.SetText(sb.ToString());
+        LiveStatus.Text = $"已复制 {_rows.Count} 条记录到剪贴板";
+    }
+
+    private static string Clean(string? s)
+        => (s ?? "").Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
+
     private void OnExport(object sender, RoutedEventArgs e)
     {
         var records = _rows.Select(r => r.Source).ToList();

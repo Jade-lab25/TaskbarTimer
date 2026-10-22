@@ -36,7 +36,7 @@
     <DataGrid Grid.Row="1" x:Name="StatsGrid" AutoGenerateColumns="False" CanUserAddRows="False"
               HeadersVisibility="Column" SelectionMode="Single" GridLinesVisibility="Horizontal"
               HorizontalGridLinesBrush="{StaticResource ColorBorder}" Background="White"
-              IsReadOnly="True" MouseDoubleClick="OnRowDoubleClick">
+              IsReadOnly="True" ClipboardCopyMode="IncludeHeader" MouseDoubleClick="OnRowDoubleClick">
       <DataGrid.Columns>
         <DataGridTextColumn Header="任务名" Binding="{Binding Task}" Width="*"/>
         <DataGridTextColumn Header="专注次数" Binding="{Binding Count}" Width="100"/>
@@ -48,7 +48,11 @@
 
     <!-- 底部汇总 -->
     <StackPanel Grid.Row="2" Margin="0,12,0,0">
-      <TextBlock x:Name="SummaryText" FontWeight="Bold"/>
+      <StackPanel Orientation="Horizontal">
+        <TextBlock x:Name="SummaryText" FontWeight="Bold" VerticalAlignment="Center"/>
+        <TextBlock x:Name="CopyStatus" Margin="12,0,0,0" Foreground="{StaticResource ColorTextMuted}" VerticalAlignment="Center"/>
+        <Button Content="复制表格" Style="{StaticResource SecondaryButton}" Margin="16,0,0,0" Click="OnCopyTable"/>
+      </StackPanel>
       <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ColorTextMuted}"
                  Text="提示：按任务名汇总专注次数与时长；可切换时间范围，搜索框支持关键字过滤（模糊匹配）。双击某行任务，可将任务名填回主窗口输入框直接再次计时。"/>
     </StackPanel>

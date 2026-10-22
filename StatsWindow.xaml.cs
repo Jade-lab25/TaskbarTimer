@@ -75,6 +75,26 @@ public partial class StatsWindow : Window
         };
     }
 
+    /// <summary>复制当前过滤后的汇总表为 TSV（粘贴到 WPS/Excel 自动分列）。</summary>
+    private void OnCopyTable(object sender, RoutedEventArgs e)
+    {
+        var rows = StatsGrid.ItemsSource as System.Collections.IList;
+        if (rows == null || rows.Count == 0)
+        {
+            MessageBox.Show("当前范围内没有可复制的任务。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("任务名\t专注次数\t总时长\t平均单次\t最近一次日期");
+        foreach (StatRow r in rows)
+            sb.AppendLine($"{Clean(r.Task)}\t{r.Count}\t{Clean(r.TotalText)}\t{Clean(r.AvgText)}\t{Clean(r.LastDate)}");
+        Clipboard.SetText(sb.ToString());
+        CopyStatus.Text = $"已复制 {rows.Count} 个任务到剪贴板";
+    }
+
+    private static string Clean(string? s)
+        => (s ?? "").Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
+
     /// <summary>双击任务行 → 把任务名填回主窗口输入框，方便直接再次计时。</summary>
     private void OnRowDoubleClick(object sender, MouseButtonEventArgs e)
     {
