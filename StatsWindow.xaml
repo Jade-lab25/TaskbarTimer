@@ -15,10 +15,21 @@
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
       <TextBlock Text="搜索任务：" VerticalAlignment="Center"/>
       <TextBox x:Name="SearchBox" Grid.Column="1" Margin="8,0,0,0"
                TextChanged="OnSearchChanged"/>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="16,0,0,0">
+        <TextBlock Text="范围：" VerticalAlignment="Center" Margin="0,0,4,0"/>
+        <ComboBox x:Name="RangeCombo" Width="90" SelectionChanged="OnRangeChanged">
+          <ComboBoxItem Content="全部"/>
+          <ComboBoxItem Content="今天"/>
+          <ComboBoxItem Content="昨天"/>
+          <ComboBoxItem Content="近7天"/>
+          <ComboBoxItem Content="近30天"/>
+        </ComboBox>
+      </StackPanel>
     </Grid>
 
     <!-- 任务汇总表 -->
@@ -39,7 +50,7 @@
     <StackPanel Grid.Row="2" Margin="0,12,0,0">
       <TextBlock x:Name="SummaryText" FontWeight="Bold"/>
       <TextBlock Margin="0,6,0,0" Foreground="{StaticResource ColorTextMuted}"
-                 Text="提示：按任务名汇总专注次数与时长；上方搜索框可输入关键字过滤（模糊匹配）。双击某行任务，可将任务名填回主窗口输入框直接再次计时。"/>
+                 Text="提示：按任务名汇总专注次数与时长；可切换时间范围，搜索框支持关键字过滤（模糊匹配）。双击某行任务，可将任务名填回主窗口输入框直接再次计时。"/>
     </StackPanel>
   </Grid>
 </Window>
