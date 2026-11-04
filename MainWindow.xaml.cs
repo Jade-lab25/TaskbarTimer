@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly SessionService _session = SessionService.Instance;
     private readonly RecordStore _store = new();
     private ObservableCollection<RecordRow> _rows = new();
+    private bool _syncingNotes; // 程序回填备忘时置位，防止触发 TextChanged 回写循环
 
     public MainWindow()
     {
@@ -150,10 +151,15 @@ public partial class MainWindow : Window
             {
                 var mode = _session.Mode == TimerMode.CountDown ? "倒计时" : "正计时";
                 LiveStatus.Text = $"进行中：{_session.TaskName}（{mode}）";
+                _syncingNotes = true;
+                NotesInput.Text = _session.Notes;
+                _syncingNotes = false;
+                NotesPanel.Visibility = Visibility.Visible;
             }
             else
             {
                 LiveStatus.Text = "";
+                NotesPanel.Visibility = Visibility.Collapsed;
                 LoadRecords(); // 刚结束的会话已落库，刷新列表
             }
         });
@@ -170,6 +176,13 @@ public partial class MainWindow : Window
             LiveStatus.Text = $"进行中：{_session.TaskName} · {TimerWidget.Format(t)}" +
                 (_session.State == SessionState.Paused ? "（已暂停）" : "");
         });
+    }
+
+    /// <summary>进行中备忘输入实时写回会话（_syncingNotes 防程序回填触发循环）。</summary>
+    private void OnNotesChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_syncingNotes) return;
+        _session.SetNotes(NotesInput.Text);
     }
 
     // ---------- 统计 ----------

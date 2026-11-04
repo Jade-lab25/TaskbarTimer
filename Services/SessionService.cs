@@ -21,6 +21,8 @@ public class SessionService
     public TimerMode Mode { get; private set; } = TimerMode.CountUp;
     public SessionState State { get; private set; } = SessionState.Idle;
     public string TaskName { get; private set; } = "";
+    /// <summary>进行中的进展/拆解备忘，结束后写入记录。</summary>
+    public string Notes { get; private set; } = "";
     public double PlannedSeconds { get; private set; } // 倒计时计划时长
     public DateTime StartedAt { get; private set; }
 
@@ -48,6 +50,7 @@ public class SessionService
         PlannedSeconds = plannedSeconds;
         StartedAt = DateTime.Now;
         _accumulatedSeconds = 0;
+        Notes = "";
         State = SessionState.Running;
         _lastTick = DateTime.Now;
         _timer.Start();
@@ -98,6 +101,7 @@ public class SessionService
             Mode = Mode == TimerMode.CountDown ? "down" : "up",
             PlannedSeconds = PlannedSeconds,
         };
+        record.Notes = Notes;
         new RecordStore().Add(record);
 
         State = SessionState.Idle;
@@ -105,6 +109,9 @@ public class SessionService
         RaiseState();
         return record;
     }
+
+    /// <summary>更新进行中的进展/拆解备忘。</summary>
+    public void SetNotes(string value) => Notes = value;
 
     private void Accumulate()
     {
