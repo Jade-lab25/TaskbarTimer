@@ -16,20 +16,26 @@ public partial class MainWindow : Window
 {
     private readonly SessionService _session = SessionService.Instance;
     private readonly RecordStore _store = new();
+    private readonly SettingsStore _settingsStore = new();
     private ObservableCollection<RecordRow> _rows = new();
     private bool _syncingNotes; // 程序回填备忘时置位，防止触发 TextChanged 回写循环
+    private bool _settingsReady; // 巡检设置控件初始化完成前，忽略设置变更回写
 
     public MainWindow()
     {
         InitializeComponent();
         _session.StateChanged += OnSessionChanged;
         _session.Tick += OnSessionTick;
+        _session.DistractionChanged += OnDistractionChanged;
         Closed += (_, _) =>
         {
             _session.StateChanged -= OnSessionChanged;
             _session.Tick -= OnSessionTick;
+            _session.DistractionChanged -= OnDistractionChanged;
         };
         RangeCombo.SelectedIndex = 0; // 在 InitializeComponent 完成后设置，触发首次加载
+        LoadCheckInSettings();
+        _settingsReady = true;
         OnSessionChanged();
 
         // 倒计时归零 → 任务栏图标闪烁提醒
@@ -112,8 +118,22 @@ public partial class MainWindow : Window
             planned = minutes * 60;
         }
 
+        // 正计时目标时长（0=不设目标）
+        double target = 0;
+        if (ModeUp.IsChecked == true)
+        {
+            foreach (var rb in TargetPanel.Children.OfType<RadioButton>())
+            {
+                if (rb.IsChecked == true && rb.Tag is string tag && double.TryParse(tag, out var tmin))
+                {
+                    target = tmin * 60;
+                    break;
+                }
+            }
+        }
+
         _session.Start(ModeDown.IsChecked == true ? TimerMode.CountDown : TimerMode.CountUp,
-            task, planned);
+            task, planned, target);
         WindowState = WindowState.Minimized; // 计时开始后缩到任务栏，让位给工作
     }
 
@@ -131,8 +151,10 @@ public partial class MainWindow : Window
 
     private void OnModeChanged(object sender, RoutedEventArgs e)
     {
-        if (CountdownPanel == null) return;
-        CountdownPanel.Visibility = ModeDown.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        if (CountdownPanel == null || TargetPanel == null) return;
+        bool down = ModeDown.IsChecked == true;
+        CountdownPanel.Visibility = down ? Visibility.Visible : Visibility.Collapsed;
+        TargetPanel.Visibility = down ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void OnPreset(object sender, RoutedEventArgs e)
@@ -147,6 +169,9 @@ public partial class MainWindow : Window
             bool active = !_session.IsIdle;
             StartBtn.IsEnabled = !active;
             StopBtn.IsEnabled = active;
+            SwitchBtn.IsEnabled = active;
+            DistractionBtn.IsEnabled = active;
+            UpdateDistractionButton();
             if (active)
             {
                 var mode = _session.Mode == TimerMode.CountDown ? "倒计时" : "正计时";
@@ -185,6 +210,54 @@ public partial class MainWindow : Window
         _session.SetNotes(NotesInput.Text);
     }
 
+    // ---------- 切换任务 / 分心计数 ----------
+
+    private void OnSwitchTask(object sender, RoutedEventArgs e)
+    {
+        if (_session.IsIdle) return;
+        var recent = new RecordStore().RecentTaskNames(8);
+        var dlg = new SwitchTaskWindow(recent);
+        if (dlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(dlg.SelectedTask))
+        {
+            _session.SwitchTask(dlg.SelectedTask);
+            TaskInput.Text = dlg.SelectedTask;
+        }
+    }
+
+    private void OnDistraction(object sender, RoutedEventArgs e) => _session.RecordDistraction();
+
+    private void OnDistractionChanged() => UpdateDistractionButton();
+
+    private void UpdateDistractionButton()
+        => DistractionBtn.Content = $"我分心了（{_session.DistractionCount}）";
+
+    // ---------- 注意力巡检设置 ----------
+
+    private void LoadCheckInSettings()
+    {
+        var s = _settingsStore.Get();
+        CheckInEnabled.IsChecked = s.CheckInEnabled;
+        CheckInMin.Text = (s.CheckInMinSeconds / 60.0).ToString("0.##");
+        CheckInMax.Text = (s.CheckInMaxSeconds / 60.0).ToString("0.##");
+    }
+
+    private void OnCheckInEnabledClick(object sender, RoutedEventArgs e) => SaveCheckInSettings();
+
+    private void OnCheckInMinutesChanged(object sender, TextChangedEventArgs e) => SaveCheckInSettings();
+
+    private void SaveCheckInSettings()
+    {
+        if (!_settingsReady) return;
+        var s = _settingsStore.Get();
+        s.CheckInEnabled = CheckInEnabled.IsChecked == true;
+        if (double.TryParse(CheckInMin.Text, out var min) && min > 0)
+            s.CheckInMinSeconds = (int)Math.Round(min * 60);
+        if (double.TryParse(CheckInMax.Text, out var max) && max > 0)
+            s.CheckInMaxSeconds = (int)Math.Round(max * 60);
+        _settingsStore.Save(s);
+        _session.RefreshSettings();
+    }
+
     // ---------- 统计 ----------
 
     private void OnRangeChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => LoadRecords();
@@ -203,10 +276,10 @@ public partial class MainWindow : Window
         _rows = new ObservableCollection<RecordRow>(filtered.Select(r => new RecordRow(r, _store)));
         if (RecordsGrid != null) RecordsGrid.ItemsSource = _rows;
 
-        // 汇总：今天 N 次 / 共 X 分钟（跨全部记录中的今日数据）
-        var (count, seconds) = _store.DailySummary(DateTime.Today.ToString("yyyy-MM-dd"));
+        // 汇总：今天 N 次 / 共 X 分钟 / 分心 N 次（跨全部记录中的今日数据）
+        var (count, seconds, distractions) = _store.DailySummary(DateTime.Today.ToString("yyyy-MM-dd"));
         if (SummaryText != null)
-            SummaryText.Text = $"今日专注 {count} 次，共 {seconds / 60.0:F0} 分钟" +
+            SummaryText.Text = $"今日专注 {count} 次，共 {seconds / 60.0:F0} 分钟，今日分心 {distractions} 次" +
                 $"（列表 {filtered.Count} 条）";
     }
 
@@ -233,8 +306,9 @@ public partial class MainWindow : Window
     /// <summary>双击历史记录行 → 填充任务名，方便直接开始。</summary>
     private void OnRecordsDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        // 双击「进展记录」列是进入单元格编辑，不填充任务名
-        if (RecordsGrid.CurrentColumn?.Header.ToString() == "进展记录") return;
+        // 双击「进展记录」「专注事项」列是进入单元格编辑，不填充任务名
+        var header = RecordsGrid.CurrentColumn?.Header.ToString();
+        if (header == "进展记录" || header == "专注事项") return;
         if (RecordsGrid.SelectedItem is RecordRow row)
         {
             TaskInput.Text = row.Task;
@@ -284,9 +358,9 @@ public partial class MainWindow : Window
             return;
         }
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine("日期\t开始时间\t结束时间\t时长\t专注事项\t进展记录");
+        sb.AppendLine("日期\t开始时间\t结束时间\t时长\t专注事项\t进展记录\t分心次数");
         foreach (var r in _rows)
-            sb.AppendLine($"{Clean(r.Date)}\t{Clean(r.Start)}\t{Clean(r.End)}\t{Clean(r.DurationText)}\t{Clean(r.Task)}\t{Clean(r.Notes)}");
+            sb.AppendLine($"{Clean(r.Date)}\t{Clean(r.Start)}\t{Clean(r.End)}\t{Clean(r.DurationText)}\t{Clean(r.Task)}\t{Clean(r.Notes)}\t{Clean(r.DistractionText)}");
         Clipboard.SetText(sb.ToString());
         LiveStatus.Text = $"已复制 {_rows.Count} 条记录到剪贴板";
     }
@@ -326,6 +400,7 @@ public class RecordRow : INotifyPropertyChanged
 {
     public TimingRecord Source { get; }
     private string _notes;
+    private string _task;
     private readonly TimingRecord _record;
 
     public RecordRow(TimingRecord record, RecordStore store)
@@ -333,13 +408,31 @@ public class RecordRow : INotifyPropertyChanged
         _record = record;
         Source = record;
         _notes = record.Notes;
+        _task = record.Task;
     }
 
     public string Date => _record.Date;
     public string Start => _record.Start;
     public string End => _record.End;
-    public string Task => _record.Task;
     public string DurationText => TimerWidget.Format(TimeSpan.FromSeconds(_record.DurationSeconds));
+
+    /// <summary>专注事项：可写属性，DataGrid 编辑提交后立即落库。</summary>
+    public string Task
+    {
+        get => _task;
+        set
+        {
+            if (value == _task) return;
+            _task = value;
+            _record.Task = value;
+            new RecordStore().Update(_record);
+            OnPropertyChanged(nameof(Task));
+        }
+    }
+
+    /// <summary>分心次数：0 显示为 -。</summary>
+    public string DistractionText
+        => _record.DistractionCount > 0 ? _record.DistractionCount.ToString() : "-";
 
     /// <summary>进展记录：可写属性，DataGrid 编辑提交后立即落库。</summary>
     public string Notes

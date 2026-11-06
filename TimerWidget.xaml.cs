@@ -20,6 +20,9 @@ public partial class TimerWidget : Window
     private readonly DispatcherTimer _topmostKeeper;
     private readonly DispatcherTimer _flashTimer;
     private bool _flashOn;
+    private DispatcherTimer? _checkInTimer; // 巡检 5 秒超时
+    private DispatcherTimer? _goalTimer;    // 目标达成提示 3 秒
+    private bool _showGoalReached;
 
     public TimerWidget()
     {
@@ -45,11 +48,17 @@ public partial class TimerWidget : Window
         _session.Tick += UpdateDisplay;
         _session.StateChanged += OnStateChanged;
         _session.Finished += OnFinished;
+        _session.CheckInDue += OnCheckInDue;
+        _session.GoalReached += OnGoalReached;
+        _session.DistractionChanged += OnDistractionChanged;
         Closed += (_, _) =>
         {
             _session.Tick -= UpdateDisplay;
             _session.StateChanged -= OnStateChanged;
             _session.Finished -= OnFinished;
+            _session.CheckInDue -= OnCheckInDue;
+            _session.GoalReached -= OnGoalReached;
+            _session.DistractionChanged -= OnDistractionChanged;
         };
     }
 
@@ -62,12 +71,47 @@ public partial class TimerWidget : Window
             : _session.ElapsedSeconds;
         TimeText.Text = Format(TimeSpan.FromSeconds(seconds));
         NameText.Text = Truncate(_session.TaskName, 14);
+        UpdateGoalDisplay();
+    }
+
+    /// <summary>更新正计时目标：进度细线 + 「已过/目标」分钟数（或「目标达成 ✓」）。</summary>
+    private void UpdateGoalDisplay()
+    {
+        bool hasGoal = _session.Mode == TimerMode.CountUp && _session.TargetSeconds > 0;
+        if (_showGoalReached)
+        {
+            GoalText.Text = "目标达成 ✓";
+            GoalText.Foreground = (Brush)FindResource("ColorSuccess");
+            GoalText.Visibility = Visibility.Visible;
+        }
+        else if (hasGoal)
+        {
+            int elapsedMin = (int)Math.Floor(_session.ElapsedSeconds / 60);
+            int targetMin = (int)Math.Round(_session.TargetSeconds / 60);
+            GoalText.Text = $"{elapsedMin}/{targetMin}";
+            GoalText.Foreground = (Brush)FindResource("ColorTextMuted");
+            GoalText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            GoalText.Visibility = Visibility.Collapsed;
+        }
+        GoalProgress.Visibility = hasGoal ? Visibility.Visible : Visibility.Collapsed;
+        if (hasGoal)
+            GoalProgress.Value = Math.Min(100, _session.ElapsedSeconds / _session.TargetSeconds * 100);
     }
 
     private void OnStateChanged()
     {
-        if (_session.IsIdle) { Hide(); return; }
+        if (_session.IsIdle)
+        {
+            CloseCheckIn();
+            _showGoalReached = false;
+            Hide();
+            return;
+        }
         if (!IsVisible) Show(); // 仅在隐藏时才显示，避免暂停/继续时重复 Show 抢焦点、打断双击
+        if (_session.State != SessionState.Running) CloseCheckIn(); // 暂停时收起巡检
         _flashTimer.Stop();
         RootBorder.Background = (Brush)FindResource("ColorBgDark");
         TimeText.Foreground = (Brush)FindResource("ColorTextLight");
@@ -78,6 +122,7 @@ public partial class TimerWidget : Window
             ? (Brush)FindResource("ColorTextMuted")
             : (Brush)FindResource("ColorTextLight");
         NameText.Text = paused ? "已暂停" : Truncate(_session.TaskName, 14);
+        UpdateDistractionMenu();
         UpdateDisplay();
     }
 
@@ -86,6 +131,69 @@ public partial class TimerWidget : Window
         _flashTimer.Start();
         if (_settingsStore.Get().PlaySoundOnFinish) System.Media.SystemSounds.Exclamation.Play();
     }
+
+    // ---------- 注意力巡检 ----------
+
+    private void OnCheckInDue()
+    {
+        if (_session.State != SessionState.Running) return;
+        CheckInText.Text = $"还在做【{Truncate(_session.TaskName, 12)}】吗？";
+        CheckInPanel.Visibility = Visibility.Visible;
+        StartCheckInTimeout();
+    }
+
+    private void StartCheckInTimeout()
+    {
+        _checkInTimer?.Stop();
+        _checkInTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _checkInTimer.Tick += (_, _) =>
+        {
+            CloseCheckIn();
+            _session.ResolveCheckIn(false); // 超时：不记录、不惩罚，重排下一次
+        };
+        _checkInTimer.Start();
+    }
+
+    private void CloseCheckIn()
+    {
+        _checkInTimer?.Stop();
+        CheckInPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void OnCheckInFocus(object sender, RoutedEventArgs e)
+    {
+        CloseCheckIn();
+        _session.ResolveCheckIn(false);
+    }
+
+    private void OnCheckInDistracted(object sender, RoutedEventArgs e)
+    {
+        CloseCheckIn();
+        _session.ResolveCheckIn(true);
+    }
+
+    // ---------- 正计时目标达成 ----------
+
+    private void OnGoalReached()
+    {
+        System.Media.SystemSounds.Asterisk.Play();
+        _showGoalReached = true;
+        UpdateGoalDisplay();
+        _goalTimer?.Stop();
+        _goalTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _goalTimer.Tick += (_, _) =>
+        {
+            _showGoalReached = false;
+            _goalTimer.Stop();
+            UpdateGoalDisplay();
+        };
+        _goalTimer.Start();
+    }
+
+    private void OnDistractionChanged() => UpdateDistractionMenu();
+
+    private void UpdateDistractionMenu()
+        => MenuDistraction.Header = $"我分心了（{_session.DistractionCount}）";
 
     internal static string Format(TimeSpan t)
         => t.TotalHours >= 1 ? $"{(int)t.TotalHours}:{t.Minutes:D2}:{t.Seconds:D2}"
@@ -148,11 +256,25 @@ public partial class TimerWidget : Window
 
     private void OnMenuToggle(object sender, RoutedEventArgs e) => _session.Toggle();
 
+    private void OnMenuSwitch(object sender, RoutedEventArgs e) => SwitchTask();
+
+    private void OnMenuDistraction(object sender, RoutedEventArgs e) => _session.RecordDistraction();
+
     private void OnMenuStop(object sender, RoutedEventArgs e) => AppActions.StopSession();
 
     private void OnMenuMain(object sender, RoutedEventArgs e) => AppActions.ShowMain();
 
     private void OnMenuExit(object sender, RoutedEventArgs e) => AppActions.ExitApp(this);
+
+    /// <summary>弹出切换任务小窗，确认后原子切换（保存当前 → 立即开始新任务）。</summary>
+    private void SwitchTask()
+    {
+        if (_session.IsIdle) return;
+        var recent = new RecordStore().RecentTaskNames(8);
+        var dlg = new SwitchTaskWindow(recent);
+        if (dlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(dlg.SelectedTask))
+            _session.SwitchTask(dlg.SelectedTask);
+    }
 
     private void OnToolTipOpening(object sender, ToolTipEventArgs e)
     {

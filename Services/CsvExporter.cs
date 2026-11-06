@@ -10,7 +10,7 @@ public static class CsvExporter
     public static string Export(IEnumerable<TimingRecord> records)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("日期,开始时间,结束时间,时长(分钟),专注事项,进展记录,模式");
+        sb.AppendLine("日期,开始时间,结束时间,时长(分钟),专注事项,进展记录,模式,目标时长(分钟),分心次数");
         foreach (var r in records)
         {
             sb.AppendLine(string.Join(",",
@@ -20,7 +20,9 @@ public static class CsvExporter
                 (r.DurationSeconds / 60.0).ToString("F1"),
                 Esc(r.Task),
                 Esc(r.Notes),
-                r.Mode == "down" ? "倒计时" : "正计时"));
+                r.Mode == "down" ? "倒计时" : "正计时",
+                r.TargetSeconds > 0 ? (r.TargetSeconds / 60.0).ToString("F0") : "",
+                r.DistractionCount.ToString()));
         }
         return sb.ToString();
     }

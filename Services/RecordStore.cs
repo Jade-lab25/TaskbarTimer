@@ -72,11 +72,23 @@ public class RecordStore : JsonStore<List<TimingRecord>>
         Save(FileName, all);
     }
 
-    /// <summary>统计某日的任务次数与总秒数。</summary>
-    public (int Count, double TotalSeconds) DailySummary(string date)
+    /// <summary>按最近一次出现时间排序，取前 N 个去重任务名（供「切换任务」快捷按钮）。</summary>
+    public List<string> RecentTaskNames(int count)
+    {
+        return GetAll()
+            .Where(r => !string.IsNullOrWhiteSpace(r.Task))
+            .GroupBy(r => r.Task.Trim())
+            .OrderByDescending(g => g.Max(r => r.Date + r.Start))
+            .Select(g => g.Key)
+            .Take(count)
+            .ToList();
+    }
+
+    /// <summary>统计某日的任务次数、总秒数与分心次数。</summary>
+    public (int Count, double TotalSeconds, int Distractions) DailySummary(string date)
     {
         var rs = GetAll().Where(r => r.Date == date).ToList();
-        return (rs.Count, rs.Sum(r => r.DurationSeconds));
+        return (rs.Count, rs.Sum(r => r.DurationSeconds), rs.Sum(r => r.DistractionCount));
     }
 }
 

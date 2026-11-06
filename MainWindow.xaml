@@ -37,10 +37,23 @@
           <Button Content="45" Style="{StaticResource SecondaryButton}" Margin="6,0,0,0" Click="OnPreset"/>
           <Button Content="90" Style="{StaticResource SecondaryButton}" Margin="6,0,0,0" Click="OnPreset"/>
         </StackPanel>
+        <StackPanel x:Name="TargetPanel" Orientation="Horizontal" Margin="0,10,0,0">
+          <TextBlock Text="目标时长：" VerticalAlignment="Center"/>
+          <RadioButton x:Name="TargetNone" Content="不设目标" GroupName="target" IsChecked="True"
+                       VerticalAlignment="Center"/>
+          <RadioButton Content="25 分钟" GroupName="target" Tag="25" VerticalAlignment="Center" Margin="12,0,0,0"/>
+          <RadioButton Content="45 分钟" GroupName="target" Tag="45" VerticalAlignment="Center" Margin="12,0,0,0"/>
+          <RadioButton Content="60 分钟" GroupName="target" Tag="60" VerticalAlignment="Center" Margin="12,0,0,0"/>
+          <RadioButton Content="90 分钟" GroupName="target" Tag="90" VerticalAlignment="Center" Margin="12,0,0,0"/>
+        </StackPanel>
         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
           <Button x:Name="StartBtn" Content="开始计时" Padding="24,6" Click="OnStart"/>
           <Button x:Name="StopBtn" Content="结束并保存" Padding="24,6" Margin="10,0,0,0"
                   Style="{StaticResource SecondaryButton}" IsEnabled="False" Click="OnStop"/>
+          <Button x:Name="SwitchBtn" Content="切换任务…" Style="{StaticResource SecondaryButton}"
+                  Margin="10,0,0,0" IsEnabled="False" Click="OnSwitchTask"/>
+          <Button x:Name="DistractionBtn" Content="我分心了" Style="{StaticResource SecondaryButton}"
+                  Margin="6,0,0,0" IsEnabled="False" Click="OnDistraction"/>
           <TextBlock x:Name="LiveStatus" VerticalAlignment="Center" Margin="14,0,0,0"
                      Foreground="{StaticResource ColorTextMuted}"/>
         </StackPanel>
@@ -49,6 +62,15 @@
           <TextBox x:Name="NotesInput" Margin="0,4,0,0" Height="72" AcceptsReturn="True"
                    TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
                    TextChanged="OnNotesChanged"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+          <CheckBox x:Name="CheckInEnabled" Content="注意力巡检" VerticalAlignment="Center"
+                    Click="OnCheckInEnabledClick"/>
+          <TextBlock Text="随机间隔" Margin="12,0,4,0" VerticalAlignment="Center"/>
+          <TextBox x:Name="CheckInMin" Width="40" TextAlignment="Center" TextChanged="OnCheckInMinutesChanged"/>
+          <TextBlock Text="~" Margin="3,0" VerticalAlignment="Center"/>
+          <TextBox x:Name="CheckInMax" Width="40" TextAlignment="Center" TextChanged="OnCheckInMinutesChanged"/>
+          <TextBlock Text="分钟" Margin="4,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
       </StackPanel>
     </Border>
@@ -87,12 +109,13 @@
         <DataGridTextColumn Header="开始时间" Binding="{Binding Start}" IsReadOnly="True" Width="80"/>
         <DataGridTextColumn Header="结束时间" Binding="{Binding End}" IsReadOnly="True" Width="80"/>
         <DataGridTextColumn Header="时长" Binding="{Binding DurationText}" IsReadOnly="True" Width="90"/>
-        <DataGridTextColumn Header="专注事项" Binding="{Binding Task}" IsReadOnly="True" Width="*"/>
+        <DataGridTextColumn Header="专注事项" Binding="{Binding Task}" Width="*"/>
+        <DataGridTextColumn Header="分心次数" Binding="{Binding DistractionText}" IsReadOnly="True" Width="80"/>
         <DataGridTextColumn Header="进展记录" Binding="{Binding Notes}" Width="2*"/>
       </DataGrid.Columns>
     </DataGrid>
 
     <TextBlock Grid.Row="3" Margin="0,8,0,0" Foreground="{StaticResource ColorTextMuted}"
-               Text="提示：计时开始后，任务栏右侧会出现计时小窗；小窗单击=暂停/继续，双击=打开本窗口，悬停可看任务名。倒计时结束会闪烁任务栏图标提醒你；双击「进展记录」单元格可编辑（自动保存）；关闭本窗口只是隐藏，可从系统托盘（双击时钟图标）重新打开。"/>
+               Text="提示：计时开始后，任务栏右侧会出现计时小窗；小窗单击=暂停/继续，双击=打开本窗口，悬停可看任务名。正计时可设目标（到点温和提醒）；注意力巡检会随机弹出且不抢焦点。倒计时结束会闪烁任务栏图标提醒；双击「专注事项」「进展记录」单元格可编辑（自动保存）；关闭本窗口只是隐藏，可从系统托盘（双击时钟图标）重新打开。"/>
   </Grid>
 </Window>

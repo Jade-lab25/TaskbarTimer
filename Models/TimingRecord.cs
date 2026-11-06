@@ -20,4 +20,8 @@ public class TimingRecord
     public string Mode { get; set; } = "up";
     /// <summary>倒计时计划时长（秒），正计时为 0。</summary>
     public double PlannedSeconds { get; set; }
+    /// <summary>正计时目标时长（秒），0 表示未设目标。</summary>
+    public double TargetSeconds { get; set; }
+    /// <summary>本会话累计分心次数。</summary>
+    public int DistractionCount { get; set; }
 }

@@ -9,11 +9,30 @@
           Padding="10,4" MouseLeftButtonDown="OnMouseLeftButtonDown"
           MouseMove="OnMouseMove" MouseLeftButtonUp="OnMouseLeftButtonUp"
           ToolTipOpening="OnToolTipOpening">
-    <StackPanel Orientation="Horizontal" x:Name="ContentPanel">
-      <TextBlock x:Name="TimeText" FontFamily="Consolas" FontSize="15" FontWeight="Bold"
-                 Foreground="{StaticResource ColorTextLight}" VerticalAlignment="Center"/>
-      <TextBlock x:Name="NameText" FontSize="13" Margin="8,0,0,0"
-                 Foreground="{StaticResource ColorTextMuted}" VerticalAlignment="Center"/>
+    <StackPanel>
+      <StackPanel Orientation="Horizontal" x:Name="ContentPanel">
+        <TextBlock x:Name="TimeText" FontFamily="Consolas" FontSize="15" FontWeight="Bold"
+                   Foreground="{StaticResource ColorTextLight}" VerticalAlignment="Center"/>
+        <TextBlock x:Name="GoalText" FontSize="12" Margin="6,0,0,0"
+                   Foreground="{StaticResource ColorSuccess}" VerticalAlignment="Center"
+                   Visibility="Collapsed"/>
+        <TextBlock x:Name="NameText" FontSize="13" Margin="8,0,0,0"
+                   Foreground="{StaticResource ColorTextMuted}" VerticalAlignment="Center"/>
+      </StackPanel>
+      <!-- 正计时目标进度细线（2px） -->
+      <ProgressBar x:Name="GoalProgress" Height="2" Margin="0,4,0,0" Minimum="0" Maximum="100"
+                   Value="0" Foreground="{StaticResource ColorAccent}"
+                   Background="{StaticResource ColorTextMuted}" Visibility="Collapsed"/>
+      <!-- 注意力巡检行：同窗向下展开，不新开窗口、不抢焦点 -->
+      <StackPanel x:Name="CheckInPanel" Orientation="Horizontal" Margin="0,6,0,2"
+                  Visibility="Collapsed">
+        <TextBlock x:Name="CheckInText" FontSize="12" Foreground="{StaticResource ColorTextLight}"
+                   VerticalAlignment="Center"/>
+        <Button Content="✓ 在专注" Margin="10,0,0,0" Padding="8,2"
+                Background="{StaticResource ColorSuccess}" Click="OnCheckInFocus"/>
+        <Button Content="✗ 分心了" Margin="6,0,0,0" Padding="8,2"
+                Background="{StaticResource ColorDanger}" Click="OnCheckInDistracted"/>
+      </StackPanel>
     </StackPanel>
     <Border.ToolTip>
       <ToolTip x:Name="WidgetTip" Content=" "/>
@@ -21,6 +40,8 @@
     <Border.ContextMenu>
       <ContextMenu>
         <MenuItem x:Name="MenuToggle" Header="开始 / 暂停" Click="OnMenuToggle"/>
+        <MenuItem Header="切换任务…" Click="OnMenuSwitch"/>
+        <MenuItem x:Name="MenuDistraction" Header="我分心了（0）" Click="OnMenuDistraction"/>
         <MenuItem Header="结束并保存本次" Click="OnMenuStop"/>
         <Separator/>
         <MenuItem Header="打开主窗口" Click="OnMenuMain"/>
