@@ -75,14 +75,10 @@
       </StackPanel>
     </Border>
 
-    <!-- 每日汇总 + 筛选 -->
-    <Grid Grid.Row="1" Margin="0,14,0,8">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*"/>
-        <ColumnDefinition Width="Auto"/>
-      </Grid.ColumnDefinitions>
-      <TextBlock x:Name="SummaryText" FontWeight="Bold" VerticalAlignment="Center"/>
-      <StackPanel Grid.Column="1" Orientation="Horizontal">
+    <!-- 每日汇总（单独一行，避免被右侧按钮遮挡）+ 筛选 -->
+    <StackPanel Grid.Row="1" Margin="0,14,0,8">
+      <TextBlock x:Name="SummaryText" FontWeight="Bold" TextWrapping="Wrap"/>
+      <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
         <TextBlock Text="范围：" VerticalAlignment="Center" Margin="0,0,4,0"/>
         <ComboBox x:Name="RangeCombo" Width="90" SelectionChanged="OnRangeChanged">
           <ComboBoxItem Content="今天"/>
@@ -97,7 +93,7 @@
         <Button Content="删除选中" Style="{StaticResource SecondaryButton}" Margin="6,0,0,0" Click="OnDelete"/>
         <Button Content="退出程序" Style="{StaticResource SecondaryButton}" Margin="6,0,0,0" Click="OnExit"/>
       </StackPanel>
-    </Grid>
+    </StackPanel>
 
     <!-- 记录表 -->
     <DataGrid Grid.Row="2" x:Name="RecordsGrid" AutoGenerateColumns="False" CanUserAddRows="False"
@@ -116,6 +112,7 @@
     </DataGrid>
 
     <TextBlock Grid.Row="3" Margin="0,8,0,0" Foreground="{StaticResource ColorTextMuted}"
+               TextWrapping="Wrap"
                Text="提示：计时开始后，任务栏右侧会出现计时小窗；小窗单击=暂停/继续，双击=打开本窗口，悬停可看任务名。正计时可设目标（到点温和提醒）；注意力巡检会随机弹出且不抢焦点。倒计时结束会闪烁任务栏图标提醒；双击「专注事项」「进展记录」单元格可编辑（自动保存）；关闭本窗口只是隐藏，可从系统托盘（双击时钟图标）重新打开。"/>
   </Grid>
 </Window>
