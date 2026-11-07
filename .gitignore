@@ -4,6 +4,9 @@ obj/
 publish/
 publish-self-contained/
 
+# 分发打包
+*.zip
+
 # Visual Studio / Rider
 .vs/
 *.user

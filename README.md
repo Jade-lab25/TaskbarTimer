@@ -29,15 +29,23 @@
 - C# / WPF，.NET 8
 - 数据存储：本地 JSON（`%APPDATA%\TaskbarTimer\records.json`）
 
-## 构建
+## 构建与分发
 
 ```bash
-# 便携版（依赖 .NET 8 桌面运行时）
-dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish
+# 本机版（依赖 .NET 8 桌面运行时，体积小）
+dotnet publish -c Release -o publish
 
-# 自包含单文件（免装运行时，拷贝即用，约 150MB）
+# 自包含版（免装运行时，适合分发）
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish-self-contained
 ```
+
+> ⚠️ 自包含版**不是真正的单文件**。WPF 程序即使开启 `PublishSingleFile`，其原生渲染库（`wpfgfx_cor3.dll`、`PresentationNative_cor3.dll`、`PenImc_cor3.dll`、`vcruntime140_cor3.dll`、`D3DCompiler_47_cor3.dll`）仍会作为独立文件输出在 exe 旁边，**必须与 exe 同目录一起分发**。
+
+### 分发方式
+
+把 `publish-self-contained` 目录下 **exe + 5 个 dll**（共 6 个文件）打包成 zip 发给对方，解压后双击 `TaskbarTimer.exe` 即用。`TaskbarTimer.pdb` 是调试符号，可删，不影响运行。
+
+> 不要只发单个 exe，否则会报「找不到 wpfgfx_cor3.dll」之类的错误。
 
 ## 数据存储位置
 

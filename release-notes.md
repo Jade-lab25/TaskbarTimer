@@ -15,7 +15,9 @@
 
 ## 使用
 
-下载下方 `TaskbarTimer.exe`，双击即用（**自包含，免装 .NET 运行时**，Win10/11 x64）。
+下载下方 `TaskbarTimer-v1.3.2-win-x64.zip`，**解压后**双击 `TaskbarTimer.exe` 即用（自包含，免装 .NET 运行时，Win10/11 x64）。
+
+> 请解压后运行，不要只复制 exe——WPF 的原生 dll 必须与 exe 同目录。
 
 - 小窗：单击=暂停/继续，双击=打开主窗，右键=菜单，拖动=移动位置
 - 数据存于 `%APPDATA%\TaskbarTimer\`
