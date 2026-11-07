@@ -23,6 +23,8 @@ public partial class TimerWidget : Window
     private DispatcherTimer? _checkInTimer; // 巡检 5 秒超时
     private DispatcherTimer? _goalTimer;    // 目标达成提示 3 秒
     private bool _showGoalReached;
+    private double _preCheckInTop;           // 巡检展开前窗口 Top，用于收起后复位
+    private bool _shiftedForCheckIn;         // 巡检展开时是否已上移窗口
 
     public TimerWidget()
     {
@@ -140,6 +142,22 @@ public partial class TimerWidget : Window
         CheckInText.Text = $"还在做【{Truncate(_session.TaskName, 12)}】吗？";
         CheckInPanel.Visibility = Visibility.Visible;
         StartCheckInTimeout();
+        // 巡检行向下展开后，若窗口底部超出工作区（贴任务栏时会被任务栏挡住），整体上移露出巡检行
+        Dispatcher.BeginInvoke(new Action(ShiftToRevealCheckIn), DispatcherPriority.Loaded);
+    }
+
+    /// <summary>布局完成后，若窗口底部越出工作区则整体上移，让巡检行完整可见。</summary>
+    private void ShiftToRevealCheckIn()
+    {
+        if (CheckInPanel.Visibility != Visibility.Visible) return;
+        UpdateLayout(); // 强制同步布局，确保 SizeToContent 已按巡检行更新窗口高度
+        var wa = SystemParameters.WorkArea;
+        if (Top + ActualHeight > wa.Bottom)
+        {
+            _preCheckInTop = Top;
+            _shiftedForCheckIn = true;
+            Top = wa.Bottom - ActualHeight - 4;
+        }
     }
 
     private void StartCheckInTimeout()
@@ -158,6 +176,12 @@ public partial class TimerWidget : Window
     {
         _checkInTimer?.Stop();
         CheckInPanel.Visibility = Visibility.Collapsed;
+        // 恢复巡检展开时的上移，让窗口回到贴任务栏的原位
+        if (_shiftedForCheckIn)
+        {
+            _shiftedForCheckIn = false;
+            Top = _preCheckInTop;
+        }
     }
 
     private void OnCheckInFocus(object sender, RoutedEventArgs e)
@@ -239,6 +263,12 @@ public partial class TimerWidget : Window
         {
             _wasDragged = true;
             _leftDown = false;
+            // 拖动时若巡检展开中，先收起并重排，避免窗口位置错乱
+            if (CheckInPanel.Visibility == Visibility.Visible)
+            {
+                CloseCheckIn();
+                _session.ResolveCheckIn(false);
+            }
             try { DragMove(); } catch { }
             PersistPosition();
         }
