@@ -14,6 +14,13 @@
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!-- 单文件发布配置：压缩 bundle + 把 WPF 原生库（wpfgfx_cor3.dll 等）也打包进 exe，
+       产出真正的单文件（可直接分发单个 exe）。仅在 PublishSingleFile=true 时生效，非单文件发布无副作用。 -->
+  <PropertyGroup>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
   <ItemGroup>
     <Resource Include="app.ico" />
   </ItemGroup>

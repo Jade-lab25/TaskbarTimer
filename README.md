@@ -39,13 +39,11 @@ dotnet publish -c Release -o publish
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish-self-contained
 ```
 
-> ⚠️ 自包含版**不是真正的单文件**。WPF 程序即使开启 `PublishSingleFile`，其原生渲染库（`wpfgfx_cor3.dll`、`PresentationNative_cor3.dll`、`PenImc_cor3.dll`、`vcruntime140_cor3.dll`、`D3DCompiler_47_cor3.dll`）仍会作为独立文件输出在 exe 旁边，**必须与 exe 同目录一起分发**。
+> 自包含版是**真正的单文件**：已在 csproj 固化 `IncludeNativeLibrariesForSelfExtract=true`，把 WPF 原生库（`wpfgfx_cor3.dll` 等）也打包进 exe，可直接分发单个 `TaskbarTimer.exe`。
 
 ### 分发方式
 
-把 `publish-self-contained` 目录下 **exe + 5 个 dll**（共 6 个文件）打包成 zip 发给对方，解压后双击 `TaskbarTimer.exe` 即用。`TaskbarTimer.pdb` 是调试符号，可删，不影响运行。
-
-> 不要只发单个 exe，否则会报「找不到 wpfgfx_cor3.dll」之类的错误。
+直接把 `publish-self-contained\TaskbarTimer.exe`（约 68MB）发给对方，双击即用，免装 .NET 运行时。`TaskbarTimer.pdb` 是调试符号，不用发。
 
 ## 数据存储位置
 
