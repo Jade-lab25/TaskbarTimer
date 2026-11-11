@@ -57,11 +57,25 @@
           <TextBlock x:Name="LiveStatus" VerticalAlignment="Center" Margin="14,0,0,0"
                      Foreground="{StaticResource ColorTextMuted}"/>
         </StackPanel>
-        <StackPanel x:Name="NotesPanel" Margin="0,10,0,0" Visibility="Collapsed">
+        <StackPanel x:Name="NotesPanel" Margin="0,10,0,0">
           <TextBlock Text="进展 / 拆解备忘："/>
-          <TextBox x:Name="NotesInput" Margin="0,4,0,0" Height="72" AcceptsReturn="True"
-                   TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
-                   TextChanged="OnNotesChanged"/>
+          <Grid Margin="0,4,0,0">
+            <TextBox x:Name="NotesInput" MinHeight="40" MaxHeight="200" Height="72"
+                     AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                     TextChanged="OnNotesChanged"/>
+            <Thumb x:Name="NotesResizeThumb" Width="14" Height="14"
+                   HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                   Cursor="SizeNWSE" DragDelta="OnNotesResizeDragDelta">
+              <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                  <Canvas Width="14" Height="14" Background="Transparent">
+                    <Line X1="9" Y1="2" X2="13" Y2="6" Stroke="#9AA0A6" StrokeThickness="1.5"/>
+                    <Line X1="4" Y1="2" X2="13" Y2="11" Stroke="#9AA0A6" StrokeThickness="1.5"/>
+                  </Canvas>
+                </ControlTemplate>
+              </Thumb.Template>
+            </Thumb>
+          </Grid>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
           <CheckBox x:Name="CheckInEnabled" Content="注意力巡检" VerticalAlignment="Center"

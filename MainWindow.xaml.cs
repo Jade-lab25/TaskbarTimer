@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using TaskbarTimer.Models;
@@ -133,7 +134,7 @@ public partial class MainWindow : Window
         }
 
         _session.Start(ModeDown.IsChecked == true ? TimerMode.CountDown : TimerMode.CountUp,
-            task, planned, target);
+            task, planned, target, NotesInput.Text);
         WindowState = WindowState.Minimized; // 计时开始后缩到任务栏，让位给工作
     }
 
@@ -179,13 +180,15 @@ public partial class MainWindow : Window
                 _syncingNotes = true;
                 NotesInput.Text = _session.Notes;
                 _syncingNotes = false;
-                NotesPanel.Visibility = Visibility.Visible;
             }
             else
             {
                 LiveStatus.Text = "";
-                NotesPanel.Visibility = Visibility.Collapsed;
                 LoadRecords(); // 刚结束的会话已落库，刷新列表
+                // 会话结束，清空备忘草稿，回到待开始状态
+                _syncingNotes = true;
+                NotesInput.Text = "";
+                _syncingNotes = false;
             }
         });
     }
@@ -203,11 +206,20 @@ public partial class MainWindow : Window
         });
     }
 
-    /// <summary>进行中备忘输入实时写回会话（_syncingNotes 防程序回填触发循环）。</summary>
+    /// <summary>备忘输入实时写回会话（_syncingNotes 防程序回填触发循环）；未计时时仅作草稿，开始计时时带入。</summary>
     private void OnNotesChanged(object sender, TextChangedEventArgs e)
     {
         if (_syncingNotes) return;
-        _session.SetNotes(NotesInput.Text);
+        if (!_session.IsIdle) _session.SetNotes(NotesInput.Text);
+    }
+
+    /// <summary>拖动右下角斜纹手柄调整备忘输入框高度。</summary>
+    private void OnNotesResizeDragDelta(object sender, DragDeltaEventArgs e)
+    {
+        var newH = NotesInput.Height + e.VerticalChange;
+        if (newH < NotesInput.MinHeight) newH = NotesInput.MinHeight;
+        if (newH > NotesInput.MaxHeight) newH = NotesInput.MaxHeight;
+        NotesInput.Height = newH;
     }
 
     // ---------- 切换任务 / 分心计数 ----------

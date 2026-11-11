@@ -56,7 +56,7 @@ public class SessionService
 
     public bool IsIdle => State == SessionState.Idle;
 
-    public void Start(TimerMode mode, string taskName, double plannedSeconds, double targetSeconds = 0)
+    public void Start(TimerMode mode, string taskName, double plannedSeconds, double targetSeconds = 0, string notes = "")
     {
         LoadSettings();
         Mode = mode;
@@ -66,7 +66,7 @@ public class SessionService
         DistractionCount = 0;
         StartedAt = DateTime.Now;
         _accumulatedSeconds = 0;
-        Notes = "";
+        Notes = notes ?? "";
         _checkInPending = false;
         _goalNotified = false;
         ScheduleNextCheckIn();
