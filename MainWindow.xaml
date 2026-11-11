@@ -4,11 +4,12 @@
         Title="任务栏计时器" Height="560" Width="760" Icon="app.ico"
         WindowStartupLocation="CenterScreen" Background="{StaticResource ColorSurface}"
         Closing="OnClosing">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <Grid Margin="16">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
-      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
@@ -113,6 +114,7 @@
     <DataGrid Grid.Row="2" x:Name="RecordsGrid" AutoGenerateColumns="False" CanUserAddRows="False"
               HeadersVisibility="Column" SelectionMode="Single" GridLinesVisibility="Horizontal"
               HorizontalGridLinesBrush="{StaticResource ColorBorder}" Background="White"
+              MinHeight="150" MaxHeight="400"
               ClipboardCopyMode="IncludeHeader" MouseDoubleClick="OnRecordsDoubleClick">
       <DataGrid.Columns>
         <DataGridTextColumn Header="日期" Binding="{Binding Date}" IsReadOnly="True" Width="90"/>
@@ -129,4 +131,5 @@
                TextWrapping="Wrap"
                Text="提示：计时开始后，任务栏右侧会出现计时小窗；小窗单击=暂停/继续，双击=打开本窗口，悬停可看任务名。正计时可设目标（到点温和提醒）；注意力巡检会随机弹出且不抢焦点。倒计时结束会闪烁任务栏图标提醒；双击「专注事项」「进展记录」单元格可编辑（自动保存）；关闭本窗口只是隐藏，可从系统托盘（双击时钟图标）重新打开。"/>
   </Grid>
+  </ScrollViewer>
 </Window>
